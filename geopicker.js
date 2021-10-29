@@ -127,10 +127,11 @@ export default class GeopickerMbTiles extends Geopicker {
          }
          self.map.setMaxZoom(maxZ);
          let lPoint = await self.__getPoint();
-         $(".pointcoords").html("");
+         let point_coords = $(self.question).find(".pointcoords");
+         point_coords.html("");
          if (isPureObject(lPoint)) {
             self.map.fitBounds(lPoint.getBounds());
-            $(".pointcoords").html(`Lat: ${self.points[0][0].toFixed(6)}&deg;, Lon: ${self.points[0][1].toFixed(6)}&deg; ${isNumber(self.points[0][3]) ? "(" + self.points[0][3].toFixed(3) + "m)" : ""}`);
+            point_coords.html(`Lat: ${self.points[0][0].toFixed(6)}&deg;, Lon: ${self.points[0][1].toFixed(6)}&deg; ${isNumber(self.points[0][3]) ? "(" + self.points[0][3].toFixed(3) + "m)" : ""}`);
             return resolve();
          } else if (!isUndefined(mbtilesBound)) {
             let north = self.mbLayer._bounds.getNorth();
@@ -262,7 +263,6 @@ export default class GeopickerMbTiles extends Geopicker {
       $(self.question).find(".input-group").append($("<div class='pointcoords'></div>"));
 
       let mbtilesdiv = $("<div class='mbtilesdiv'></div>");
-
       let path = $("<div class='mbtilespath'></div>");
       if (isString(mbtilesPath)) {
          path.html(mbtilesPath)
@@ -332,13 +332,10 @@ export default class GeopickerMbTiles extends Geopicker {
          window.geopicker = [];
       window.geopicker.push(this);
       if (self._getProps().appearances.includes("mbtiles") && $(self.question).find(".map-canvas")) {
-         if (window.geopicker.length === 1)
-            Promise.all([
-               scriptjs('https://unpkg.com/sql.js@0.3.2/js/sql.js'),
-               scriptjs('https://unpkg.com/Leaflet.TileLayer.MBTiles@1.0.0/Leaflet.TileLayer.MBTiles.js')
-            ]).then(() => self.__onLibIsLoad());
-         else
-            self.__onLibIsLoad();
+         Promise.all([
+            scriptjs('https://unpkg.com/sql.js@0.3.2/js/sql.js'),
+            scriptjs('https://unpkg.com/Leaflet.TileLayer.MBTiles@1.0.0/Leaflet.TileLayer.MBTiles.js')
+         ]).then(() => self.__onLibIsLoad());
       }
    }
 }
