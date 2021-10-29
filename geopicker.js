@@ -130,7 +130,7 @@ export default class GeopickerMbTiles extends Geopicker {
          $(".pointcoords").html("");
          if (isPureObject(lPoint)) {
             self.map.fitBounds(lPoint.getBounds());
-            $(".pointcoords").html(`Lat: ${self.points[0][0].toFixed(6)}°, Lon: ${self.points[0][1].toFixed(6)}° ${isNumber(self.points[0][3]) ? "(" + self.points[0][3].toFixed(3) + "m)" : ""}`);
+            $(".pointcoords").html(`Lat: ${self.points[0][0].toFixed(6)}&deg;, Lon: ${self.points[0][1].toFixed(6)}&deg; ${isNumber(self.points[0][3]) ? "(" + self.points[0][3].toFixed(3) + "m)" : ""}`);
             return resolve();
          } else if (!isUndefined(mbtilesBound)) {
             let north = self.mbLayer._bounds.getNorth();
