@@ -1,58 +1,153 @@
 /*
+ * Diego Bernardi <bernardiego@gmail.com>
  * Antea Group.
  */
 
 // Load the original SCSS files
 @import '../../node_modules/enketo-core/src/widget/geo/geopicker';
 
+.red-round-geopoint-marker {
+  background-color: #ad2323;
+  border-radius: 50%;
+  border: 3px solid white;
+  opacity: 1;
+}
+
+.geopicker.hide-input > .geo-inputs {
+  width: 0 !important;
+  min-width: 1px !important;
+}
+
 // And add some styles for the mbtiles loader
 .mbtilesdiv {
-    display: flex;
+  display: flex;
+  position: relative;
+  padding-top: 7px;
+
+  & > .mbtilespath {
+    display: none;
+    position: absolute;
+    top: 10px;
+    font-size: 13px;
+    font-weight: 500;
+    color: black;
+    line-height: 0.9;
+  }
+
+  & > input {
+    flex: 1;
+    padding: 5px 6px !important;
+  }
+
+  & > button {
+    cursor: pointer;
+    width: 45px;
+    font-size: 16px;
+    padding: 0;
+    margin: 8px 0 8px 16px;
+    border: 1px solid #cccccc;
+    border-radius: 3px;
+
+    &:hover {
+      background-color: #cccccc;
+    }
+  }
+}
+
+.input-group {
+  & > .pointcoords {
+    width: 100%;
+    display: none;
+    line-height: 2.25;
+    color: #665b5b;
+    font-style: italic;
+  }
 }
 
 .loader {
-    display: none;
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    z-index: 1;
-    width: 150px;
-    height: 150px;
-    margin: -75px 0 0 -75px;
-    border: 16px solid #f3f3f3;
-    border-radius: 50%;
-    border-top: 16px solid #3498db;
-    width: 120px;
-    height: 120px;
-    -webkit-animation: spin 2s linear infinite;
-    animation: spin 2s linear infinite;
-    z-index: 1000;
+  display: none;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 1;
+  width: 150px;
+  height: 150px;
+  margin: -75px 0 0 -75px;
+  border: 16px solid #f3f3f3;
+  border-radius: 50%;
+  border-top: 16px solid #3498db;
+  width: 120px;
+  height: 120px;
+  -webkit-animation: spin 2s linear infinite;
+  animation: spin 2s linear infinite;
+  z-index: 1000;
 }
 
 @-webkit-keyframes spin {
-    0% { -webkit-transform: rotate(0deg); }
-    100% { -webkit-transform: rotate(360deg); }
+  0% {
+    -webkit-transform: rotate(0deg);
+  }
+
+  100% {
+    -webkit-transform: rotate(360deg);
+  }
 }
 
 @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
 /* Add animation to "page content" */
 .animate-bottom {
-    position: relative;
-    -webkit-animation-name: animatebottom;
-    -webkit-animation-duration: 1s;
-    animation-name: animatebottom;
-    animation-duration: 1s
+  position: relative;
+  -webkit-animation-name: animatebottom;
+  -webkit-animation-duration: 1s;
+  animation-name: animatebottom;
+  animation-duration: 1s
 }
 
 @-webkit-keyframes animatebottom {
-    from { bottom:-100px; opacity:0 } 
-    to { bottom:0px; opacity:1 }
+  from {
+    bottom: -100px;
+    opacity: 0
+  }
+
+  to {
+    bottom: 0px;
+    opacity: 1
+  }
 }
 
-@keyframes animatebottom { 
-    from{ bottom:-100px; opacity:0 } 
-    to{ bottom:0; opacity:1 }
+@keyframes animatebottom {
+  from {
+    bottom: -100px;
+    opacity: 0
+  }
+
+  to {
+    bottom: 0;
+    opacity: 1
+  }
+}
+
+@media screen and (max-width: 720px) {
+  .geo-inputs > .geo {
+    display: none !important;
+  }
+
+  .input-group {
+    & > input,
+    & > button {
+      display: none !important;
+    }
+
+    & > .pointcoords {
+      display: flex !important;
+    }
+  }
 }

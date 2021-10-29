@@ -1,28 +1,33 @@
 {
-    "name": "enketo-mbtiles-widget",
-    "description": "Enketo widget to support mbtiles files on geomap",
-    "homepage": "https://enketo.org",
-    "version": "1.0.0",
-    "main": "./geopicker.js",
-    "keywords": [
-        "enketo",
-		"mbtiles",
-		"anteagroup"
-    ],
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/geohyd/enketo-mbtiles-widget"
+  "name": "enketo-mbtiles-widget",
+  "description": "Enketo widget to support mbtiles files",
+  "homepage": "https://site.geoagro.com/",
+  "version": "1.0.0",
+  "main": "./geopicker.js",
+  "keywords": [
+    "enketo",
+    "mbtiles"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bernardiego/enketo-mbtiles-widget"
+  },
+  "contributors": [
+    {
+      "name": "Diego Bernardi",
+      "email": "bernardiego@gmail.com",
+      "url": "https://site.geoagro.com/"
     },
-    "bugs": "https://github.com/geohyd/enketo-mbtiles-widget/issues",
-    "author": {
-        "name": "Maxime Gourlay",
-        "email": "maxime.gourlay@anteagroup.fr",
-        "url": "https://www.anteagroup.fr"
-    },
-    "contributors": [],
-    "private": true,
-    "license": "Apache-2.0",
-    "dependencies": {
-        "enketo-core": "5.x.x"
+    {
+      "name": "Maxime Gourlay",
+      "email": "maxime.gourlay@anteagroup.fr",
+      "url": "https://www.anteagroup.fr"
     }
+  ],
+  "private": false,
+  "license": "Apache-2.0",
+  "dependencies": {
+    "enketo-core": "5.x.x",
+    "scriptjs": "2.5.9"
+  }
 }
