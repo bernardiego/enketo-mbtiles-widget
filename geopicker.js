@@ -1,5 +1,5 @@
 /*
- * Diego Bernardi <bernardiego@gmail.com>
+ * Diego Bernardi <bernardiego@gmail.com> - GeoAgro by Tek.
  * Antea Group.
  */
 
@@ -12,29 +12,71 @@ import scriptjs from 'scriptjs';
 const isUndefined = (attribute) => typeof attribute === "undefined";
 const isNumber = (attribute) => typeof attribute === "number";
 const isFunction = (attribute) => typeof attribute === "function";
+const isBoolean = (attribute) => typeof attribute === "boolean";
 const isString = (attribute) => typeof attribute === "string";
 const isPureObject = (attribute) => typeof attribute === "object" && attribute !== null && !Array.isArray(attribute);
 
-// Make your custom config file.
-import { custom_options } from './config';
-const options = custom_options || {};
-const maxZoom = options && options.map && isNumber(options.map.maxZoom) ? options.map.maxZoom : 24;
-const markerColor = options && options.map && isString(options.map.markerColor) ? options.map.markerColor : "blue";
-const markerSize = options && options.map && options.map.markerSize === "big" ? options.map.markerSize : "small";
-const mbtilesPath = options && isString(options.mbtilesPath) && options.mbtilesPath !== "" ? options.mbtilesPath : undefined;
-
 export default class GeopickerMbTiles extends Geopicker {
 
+   /**
+    * Gets and parses the "appearance" string (as JSON) and creates a custom options object.
+    * This object could be different for every question, making it flexible.
+    */
+   __initOptions() {
+      let self = this;
+      let appearances = self._getProps().appearances;
+      self.customOpts = {};
+      if (appearances.length > 0 && isString(appearances[0])) {
+         let opts = undefined;
+         try {
+            opts = JSON.parse(appearances[0]);
+         } catch (err) {
+            console.log("Couldn't parse appearances. Either is not a JSON string or has errors.");
+         }
+         if (isPureObject(opts)) {
+            let keys = Object.keys(opts);
+            for (let i = 0; i < keys.length; i++)
+               self.customOpts[keys[i]] = opts[keys[i]];
+         }
+      }
+      if (!isBoolean(self.customOpts.mbtiles))
+         self.customOpts.mbtiles = false;
+      if (!isString(self.customOpts.mode) || self.customOpts.mode === "")
+         self.customOpts.mode = "normal";
+      if (!isString(self.customOpts.mbtilespath) || self.customOpts.mbtilespath === "")
+         self.customOpts.mbtilespath = undefined;
+      else if (self.customOpts.mbtilespath.indexOf(":") === -1)
+         self.customOpts.mbtilespath = `Suggested path: ${self.customOpts.mbtilespath}`;
+      if (!isNumber(self.customOpts.maxzoom) || self.customOpts.maxzoom <= 0 || self.customOpts.maxzoom > 24)
+         self.customOpts.maxzoom = 24;
+      if (!isString(self.customOpts.markercolor))
+         self.customOpts.markercolor = "blue";
+      if (self.customOpts.markersize !== "big")
+         self.customOpts.markersize = "small";
+   }
+
+   /**
+    * Gets the "id" of this geo* question.
+    *
+    * @return {string} The geo* question id.
+    */
    __getQuestionId() {
-      var formId = $('form').attr("id") || $('form').attr("data-form-id");
+      let formId = $('form').attr("id") || $('form').attr("data-form-id");
       return $(this.question).find("input[name*='" + formId + "']").prop("name");
    }
 
+   /**
+    * Obtains a personalized icon marker for the added point.
+    * The icon can be personalized through the custom options object.
+    * Once created, the icon is cached inside this geo* question.
+    * 
+    * @return {L.Icon} The created leaflet icon.
+    */
    __getIcon() {
       let self = this;
       const posible_colors = ["black", "blue", "gold", "green", "grey", "orange", "red", "violet", "yellow"];
-      const color = isString(markerColor) && posible_colors.indexOf(markerColor) > -1 ? markerColor : "blue";
-      const size = markerSize === "big" ? "-2x" : "";
+      const color = isString(self.customOpts.markercolor) && posible_colors.indexOf(self.customOpts.markercolor) > -1 ? self.customOpts.markercolor : "blue";
+      const size = self.customOpts.markersize === "big" ? "-2x" : "";
 
       if (isPureObject(self.markerIcon) && self.markerIcon.color === color && self.markerIcon.icon instanceof L.Icon)
          return self.markerIcon.icon;
@@ -54,6 +96,12 @@ export default class GeopickerMbTiles extends Geopicker {
       return self.markerIcon.icon;
    }
 
+   /**
+    * Useful funtion to check when the map object is created,
+    * so we can perform actions after that.
+    *
+    * @return {Promise} When the map is created.
+    */
    __onMapReady() {
       let self = this;
       return new Promise(async (resolve) => {
@@ -63,10 +111,21 @@ export default class GeopickerMbTiles extends Geopicker {
       });
    }
 
+   /**
+    * Check if the selected point in the map is valid.
+    *
+    * @return {boolean} Whether geopoint is valid.
+    */
    __hasValidPoint() {
       return this.points[0].length === 4 && isNumber(this.points[0][0]) && isNumber(this.points[0][1]);
    }
 
+   /**
+    * Creates an invisible Leaflet marker with the selected point (if there is one)
+    * so we can obtain its bounds later.
+    *
+    * @return {Promise<L.FeatureGroup|undefined>} The Leaflet marker or undefined.
+    */
    __getPoint() {
       let self = this;
       return new Promise(async (resolve) => {
@@ -92,6 +151,16 @@ export default class GeopickerMbTiles extends Geopicker {
       });
    }
 
+   /**
+    * Sets an observer to watch for new points added to the map in the widget.
+    * This allow us to bypass the capture of every single point-adition' action
+    * (KML, update inputs directly, click on map, click on georeference button, etc)
+    * and make the customizations for every one of them with one function.
+    *
+    * @param {Function|undefined} callback - Asynchronous function to perform every time
+    * a child of Node ".leaflet-marker-pane" is modified.
+    * @return {undefined} undefined;
+    */
    __onPointAddition(callback = undefined) {
       let self = this;
       if (!isFunction(callback))
@@ -106,6 +175,11 @@ export default class GeopickerMbTiles extends Geopicker {
       );
    }
 
+   /**
+    * Updates the marker icon for the added point. This icon' style is customizable.
+    *
+    * @return {undefined} undefined.
+    */
    __changeMarkerIcon() {
       let self = this;
       let icon = self.__getIcon();
@@ -115,10 +189,20 @@ export default class GeopickerMbTiles extends Geopicker {
          });
    }
 
+   /**
+    * This allows our map to zoom to a relevant element every time an mbtile
+    * or a point is added/removed from it. It uses a chain of priorities to make zoom:
+    * 1) Zooms to point added.
+    * 2) If there's no point added, zooms to mbtiles layer.
+    * 3) If there's no mbtiles layer, zooms to current position' point.
+    * 4) If there's no current position' point, zooms to the world.
+    *
+    * @return {Promise<undefined>} undefined.
+    */
    __adaptiveZoom() {
       let self = this;
       return new Promise(async (resolve) => {
-         let maxZ = maxZoom;
+         let maxZ = self.customOpts.maxzoom;
          let mbtilesBound = undefined;
          if (self.map.hasLayer(self.mbLayer)) {
             mbtilesBound = self.mbLayer._bounds;
@@ -144,8 +228,14 @@ export default class GeopickerMbTiles extends Geopicker {
       });
    }
 
+   /**
+    * Gets the GPS current position and creates a read-only non-valid-as-a-respose Leaflet marker.
+    * Then, we add it to the map and zoom to it.
+    *
+    * @return {undefined} undefined.
+    */
    __AddCurrentPositionMarker() {
-      var self = this;
+      let self = this;
       getCurrentPosition({
          enableHighAccuracy: true,
          maximumAge: 0
@@ -174,8 +264,39 @@ export default class GeopickerMbTiles extends Geopicker {
       });
    }
 
+   /**
+    * A useful function to add personalized behaviour to the map.
+    * The parameter "mode" is obteained from the "appearances" json object (custom options).
+    *
+    * @return {undefined} undefined.
+    */
+   __setMode() {
+      let self = this;
+      switch (self.customOpts.mode) {
+         case "fixed":
+            if (isPureObject(self.map)) {
+               self.$detect.trigger("click");
+               self.map.eachLayer(l => l.off("click"));
+               self.map.off("click");
+               self.$detect
+                  .attr("style", "cursor: not-allowed")
+                  .off("click");
+            }
+            self.$inputGroup.find("> .geo input")
+               .attr("disabled", "disabled");
+            break;
+         default:
+            break;
+      }
+   }
+
+   /**
+    * Deletes an mbtiles layer from the map and from the temporal database.
+    *
+    * @return {undefined} undefined.
+    */
    __removeMBLayer() {
-      var self = this;
+      let self = this;
       if (isUndefined(self.map) || isUndefined(self.mbLayer))
          return;
 
@@ -183,12 +304,19 @@ export default class GeopickerMbTiles extends Geopicker {
          self.map.removeLayer(self.mbLayer);
          self.mbLayer = undefined;
       }
-      var tx = self.db.transaction("mbtiles", "readwrite");
-      var store = tx.objectStore("mbtiles");
-
+      let tx = self.db.transaction("mbtiles", "readwrite");
+      let store = tx.objectStore("mbtiles");
       store.delete(self.idQuestion);
    }
 
+   /**
+    * Tries to open the loaded mbtiles store object and obtain its "bounds" metadata attribute.
+    * If successful, we create a bound, so we can zoom to the added layer.
+    * The created bound object is cached into the mbtiles leaflet layer.
+    *
+    * @param {boolean} force - Whether to force the zoom to this layer.
+    * @return {undefined} undefined
+    */
    __fitMbtilesBounds(force = false) {
       let self = this;
       if (isUndefined(self.map)) {
@@ -235,6 +363,14 @@ export default class GeopickerMbTiles extends Geopicker {
       }
    }
 
+   /**
+    * Adds an mbtiles layer to the map and to the temporal database.
+    * After, we zoom to it if possible.
+    *
+    * @param {Array<File>} files - Array with the mbtiles file/s selected by the user from the
+    * local disk.
+    * @return {undefined} undefined.
+    */
    __addMbTiles(files) {
       let self = this;
       self.__onMapReady().then(() => {
@@ -243,8 +379,8 @@ export default class GeopickerMbTiles extends Geopicker {
          self.mbLayer = L.tileLayer.mbTiles(tmppath).addTo(self.map);
          self.mbLayer.bringToFront();
          self.mbLayer.on('databaseloaded', (ev) => {
-            var tx = self.db.transaction("mbtiles", "readwrite");
-            var store = tx.objectStore("mbtiles");
+            let tx = self.db.transaction("mbtiles", "readwrite");
+            let store = tx.objectStore("mbtiles");
             store.put({ path: files, mbId: self.idQuestion });
             tx.oncomplete = () => {
                self.__fitMbtilesBounds();
@@ -258,14 +394,23 @@ export default class GeopickerMbTiles extends Geopicker {
       });
    }
 
+   /**
+    * Update this question' html adding necessary elements: 
+    * 1) Input for mbtile selection,
+    * 2) Button "zoom to mbtile layer"
+    * 3) Button "delete mbtiles layer".
+    * 4) A hidden container to allocate the added point' coordinates.
+    *
+    * @return {undefined} undefined.
+    */
    __initContent() {
-      var self = this;
+      let self = this;
       $(self.question).find(".input-group").append($("<div class='pointcoords'></div>"));
 
       let mbtilesdiv = $("<div class='mbtilesdiv'></div>");
       let path = $("<div class='mbtilespath'></div>");
-      if (isString(mbtilesPath)) {
-         path.html(mbtilesPath)
+      if (isString(self.customOpts.mbtilespath)) {
+         path.html(self.customOpts.mbtilespath)
          mbtilesdiv.attr("style", "padding-top: 23px;");
          path.attr("style", "display: flex;");
       }
@@ -295,12 +440,17 @@ export default class GeopickerMbTiles extends Geopicker {
       $(self.question).find("div.map-canvas-wrapper").append(mbtilesdiv);
    }
 
+   /**
+    * Performs some actions once the necessary js libraries are loaded.
+    *
+    * @return {undefined} undefined.
+    */
    __onLibIsLoad() {
-      var self = this;
+      let self = this;
       self.idQuestion = self.__getQuestionId();
       $(self.question).find(".map-canvas").append("<div class='loader'></div>");
 
-      var request = window.indexedDB.open("enketoMbtiles", 2);
+      let request = window.indexedDB.open("enketoMbtiles", 2);
       request.onupgradeneeded = (e) => {
          self.db = e.target.result;
          self.db.objectStoreNames.contains("mbtiles") || self.db.createObjectStore("mbtiles", { keyPath: "mbId" });
@@ -309,10 +459,8 @@ export default class GeopickerMbTiles extends Geopicker {
          self.db = request.result;
       };
 
-      // Initialization of the widget
       self.__initContent();
 
-      // Actions to perform once the map is loaded.        
       self.__onMapReady().then(() => {
          self.__AddCurrentPositionMarker();
          self.__onPointAddition(async (records) => {
@@ -322,16 +470,18 @@ export default class GeopickerMbTiles extends Geopicker {
             });
             await self.__adaptiveZoom();
          });
+         self.__setMode();
       })
    }
 
    _init() {
       super._init();
-      var self = this;
+      let self = this;
       if (isUndefined(window.geopicker))
          window.geopicker = [];
       window.geopicker.push(this);
-      if (self._getProps().appearances.includes("mbtiles") && $(self.question).find(".map-canvas")) {
+      self.__initOptions();
+      if (self.customOpts.mbtiles === true && $(self.question).find(".map-canvas")) {
          Promise.all([
             scriptjs('https://unpkg.com/sql.js@0.3.2/js/sql.js'),
             scriptjs('https://unpkg.com/Leaflet.TileLayer.MBTiles@1.0.0/Leaflet.TileLayer.MBTiles.js')
